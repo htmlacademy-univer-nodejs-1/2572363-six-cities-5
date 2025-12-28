@@ -2,10 +2,12 @@ import { inject, injectable } from 'inversify';
 import { DocumentType } from '@typegoose/typegoose';
 import { UserEntity } from './user.entity.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 import { UserService } from './user-service.interface.js';
 import { Logger } from '../../core/logger/logger.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { UserModel } from './user.entity.js';
+import { OfferEntity } from '../offer/offer.entity.js';
 
 @injectable()
 export class DefaultUserService implements UserService {
@@ -50,5 +52,94 @@ export class DefaultUserService implements UserService {
     }
 
     return this.create(dto, salt);
+  }
+
+  public async updateById(userId: string, dto: UpdateUserDto): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel
+        .findByIdAndUpdate(userId, dto, { new: true })
+        .exec();
+    } catch (error) {
+      this.logger.error(`Failed to update user: ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async verifyUser(email: string, password: string, salt: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      const user = await UserModel.findOne({ email }).exec();
+      if (!user) {
+        return null;
+      }
+
+      if (!user.verifyPassword(password, salt)) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(`Failed to verify user: ${email}`, error as Error);
+      return null;
+    }
+  }
+
+  public async findById(userId: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel.findById(userId).exec();
+    } catch (error) {
+      this.logger.error(`Failed to find user by id: ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async addFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel
+        .findByIdAndUpdate(
+          userId,
+          { $addToSet: { offerId } },
+          { new: true }
+        )
+        .exec();
+    } catch (error) {
+      this.logger.error(`Failed to add favorite offer ${offerId} for user ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async removeFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel
+        .findByIdAndUpdate(
+          userId,
+          { $pull: { offerId } },
+          { new: true }
+        )
+        .exec();
+    } catch (error) {
+      this.logger.error(`Failed to remove favorite offer ${offerId} for user ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async getFavorites(userId: string): Promise<DocumentType<OfferEntity>[]> {
+    try {
+      const user = await UserModel
+        .findById(userId)
+        .populate({
+          path: 'favoriteOffers',
+          populate: { path: 'author' }
+        })
+        .exec();
+
+      if (!user || !user.favoriteOffers) {
+        return [];
+      }
+
+      return user.favoriteOffers as DocumentType<OfferEntity>[];
+    } catch (error) {
+      this.logger.error(`Failed to get favorites for user ${userId}`, error as Error);
+      return [];
+    }
   }
 }

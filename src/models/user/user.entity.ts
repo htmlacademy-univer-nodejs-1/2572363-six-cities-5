@@ -27,6 +27,9 @@ export class UserEntity extends defaultClasses.TimeStamps {
   @prop({ required: true, enum: ['ordinary', 'pro'], default: ''})
   public type!: 'ordinary' | 'pro';
 
+  @prop({ required: false, default: [], ref: 'OfferEntity' })
+  public favoriteOffers!: typegoose.Ref<typegoose.DocumentType<import('../offer/offer.entity.js').OfferEntity>>[];
+
   constructor(userData: { name: string; email: string; avatar?: string; type: 'ordinary' | 'pro' }) {
     super();
 

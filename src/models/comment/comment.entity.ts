@@ -10,10 +10,11 @@ export interface CommentEntity extends defaultClasses.Base {}
   schemaOptions: {
     collection: 'comments',
     timestamps: true,
+    id: true
   }
 })
 export class CommentEntity extends defaultClasses.TimeStamps {
-  @prop({ required: true, minlength: 5, maxlength: 1024 })
+  @prop({ required: true, minlength: 5, maxlength: 1024, trim: true })
   public text!: string;
 
   @prop({ required: true, min: 1, max: 5 })

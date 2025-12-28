@@ -12,9 +12,12 @@ import { UserService } from '../../models/user/user-service.interface.js';
 import { DefaultUserService } from '../../models/user/default-user.service.js';
 import { OfferService } from '../../models/offer/offer-service.interface.js';
 import { DefaultOfferService } from '../../models/offer/default-offer.service.js';
+import { CommentService } from '../../models/comment/comment-service.interface.js';
+import { DefaultCommentService } from '../../models/comment/default-comment.service.js';
 import { types } from '@typegoose/typegoose';
 import { UserModel, UserEntity } from '../../models/user/user.entity.js';
 import { OfferModel, OfferEntity } from '../../models/offer/offer.entity.js';
+import { CommentModel, CommentEntity } from '../../models/comment/comment.entity.js';
 
 export function createRestApplicationContainer() {
   const restApplicationContainer = new Container();
@@ -26,9 +29,11 @@ export function createRestApplicationContainer() {
 
   restApplicationContainer.bind<UserService>(Component.UserService).to(DefaultUserService);
   restApplicationContainer.bind<OfferService>(Component.OfferService).to(DefaultOfferService);
+  restApplicationContainer.bind<CommentService>(Component.CommentService).to(DefaultCommentService);
 
   restApplicationContainer.bind<types.ModelType<UserEntity>>(Component.UserModel).toConstantValue(UserModel);
   restApplicationContainer.bind<types.ModelType<OfferEntity>>(Component.OfferModel).toConstantValue(OfferModel);
+  restApplicationContainer.bind<types.ModelType<CommentEntity>>(Component.CommentModel).toConstantValue(CommentModel);
 
   return restApplicationContainer;
 }
