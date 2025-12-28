@@ -1,0 +1,558 @@
+openapi: 3.0.3
+info:
+  title: API сервиса «Шесть городов»
+  description: REST API для сервиса аренды жилья в шести европейских городах
+  version: 1.0.0
+
+paths:
+  /users:
+    post:
+      tags:
+        - users
+      summary: Создание нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        201:
+          description: Успешное создание нового пользователя
+        400:
+          description: Некорректная валидация
+        409:
+          description: Пользователь с таким email уже существует
+
+  /users/login:
+    post:
+      tags:
+        - users
+      summary: Вход в закрытую часть приложения
+      responses:
+        200:
+          description: Успешная авторизация
+        400:
+          description: Некорректный логин или пароль
+        401:
+          description: Не авторизованный пользователь
+
+  /users/check:
+    get:
+      tags:
+        - users
+      summary: Проверка состояния пользователя
+      responses:
+        200:
+          description: Успешная проверка
+        401:
+          description: Неавторизованный пользователь
+
+  /offers:
+    get:
+      tags:
+        - offers
+      summary: Список предложений по аренде
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 60
+          description: Количество возвращаемых предложений
+        - name: city
+          in: query
+          schema:
+            type: string
+            enum: [Paris, Cologne, Brussels, Amsterdam, Hamburg, Dusseldorf]
+          description: Фильтр по городу
+      responses:
+        200:
+          description: Успешно получен список предложений
+
+    post:
+      tags:
+        - offers
+      summary: Создание нового предложения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOffer'
+      responses:
+        201:
+          description: Новое предложение создано
+        400:
+          description: Некорректная валидация
+        401:
+          description: Не авторизованный пользователь
+
+  /offers/{offerId}:
+    get:
+      tags:
+        - offers
+      summary: Детальная информация по предложению
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Детальная информация по предложению успешно получена
+        404:
+          description: Предложение не найдено
+
+    put:
+      tags:
+        - offers
+      summary: Редактирование предложения
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOffer'
+      responses:
+        200:
+          description: Предложение успешно отредактировано
+        400:
+          description: Пользователь может редактировать только свои предложения
+        401:
+          description: Не авторизованный пользователь
+        403:
+          description: Нет прав для редактирования
+        404:
+          description: Предложение не найдено
+
+    delete:
+      tags:
+        - offers
+      summary: Удаление предложения по аренде
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Предложение успешно удалено
+        400:
+          description: Пользователь может удалять только свои предложения
+        401:
+          description: Не авторизованный пользователь
+        403:
+          description: Нет прав для удаления
+        404:
+          description: Предложение не найдено
+
+  /offers/premium_by_city/{city}:
+    get:
+      tags:
+        - offers
+      summary: Премиальные предложения для города
+      parameters:
+        - name: city
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [ Paris, Cologne, Brussels, Amsterdam, Hamburg, Dusseldorf ]
+      responses:
+        200:
+          description: Возвращает не более 3 премиальных предложения
+        400:
+          description: Некорректный город
+
+  /offers/{offerId}/comments:
+    get:
+      tags:
+        - comments
+      summary: Список комментариев для предложения
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Список комментариев для предложения успешно получен (до 50 комментариев)
+        404:
+          description: Предложение не найдено
+
+    post:
+      tags:
+        - comments
+      summary: Добавление комментария
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComment'
+      responses:
+        201:
+          description: Успешное добавление комментария
+        400:
+          description: Некорректная валидация
+        401:
+          description: Не авторизованный пользователь
+        404:
+          description: Предложение не найдено
+
+  /favorites:
+    get:
+      tags:
+        - offers
+      summary: Список избранных предложений
+      responses:
+        200:
+          description: Возвращает список избранных предложений
+        401:
+          description: Не авторизованный пользователь
+
+  /favorites/{offerId}:
+    post:
+      tags:
+        - offers
+      summary: Добавление предложения в избранное
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Добавление прошло успешно
+        401:
+          description: Не авторизованный пользователь
+        404:
+          description: Предложение не найдено
+
+    delete:
+      tags:
+        - offers
+      summary: Удаление предложения из избранного
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Удаление прошло успешно
+        401:
+          description: Не авторизованный пользователь
+        404:
+          description: Предложение не найдено
+
+tags:
+  - name: users
+    description: Для действий с пользователями
+  - name: offers
+    description: Действия с предложениями
+  - name: comments
+    description: Действия с комментариями
+
+components:
+  schemas:
+    CreateUser:
+      type: object
+      required: [name, email, password, type]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 15
+          example: "Oliver Conner"
+        email:
+          type: string
+          format: email
+          example: "oliver.conner@gmail.com"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 12
+          example: "password123"
+        avatar:
+          type: string
+          example: "default-avatar.jpg"
+        type:
+          type: string
+          enum: [ordinary, pro]
+          example: "pro"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          example: "Oliver Conner"
+        email:
+          type: string
+          example: "oliver.conner@gmail.com"
+        avatar:
+          type: string
+          example: "default-avatar.jpg"
+        type:
+          type: string
+          example: "pro"
+
+    CreateOffer:
+      type: object
+      required: [title, description, city, previewImage, images, isPremium, type, bedrooms, maxAdults, price, goods]
+      properties:
+        title:
+          type: string
+          minLength: 10
+          maxLength: 100
+          example: "Beautiful & luxurious apartment"
+        description:
+          type: string
+          minLength: 20
+          maxLength: 1024
+          example: "A quiet cozy and picturesque apartment"
+        city:
+          type: string
+          enum: [Paris, Cologne, Brussels, Amsterdam, Hamburg, Dusseldorf]
+          example: "Amsterdam"
+        previewImage:
+          type: string
+          example: "img/apartment-01.jpg"
+        images:
+          type: array
+          minItems: 6
+          maxItems: 6
+          items:
+            type: string
+          example: ["img/apartment-01.jpg", "img/apartment-02.jpg", "img/apartment-03.jpg", "img/room.jpg", "img/studio-01.jpg", "img/apartment-01.jpg"]
+        isPremium:
+          type: boolean
+          example: true
+        type:
+          type: string
+          enum: [apartment, house, room, hotel]
+          example: "apartment"
+        bedrooms:
+          type: integer
+          minimum: 1
+          maximum: 8
+          example: 3
+        maxAdults:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 4
+        price:
+          type: integer
+          minimum: 100
+          maximum: 100000
+          example: 120
+        goods:
+          type: array
+          items:
+            type: string
+            enum: [Breakfast, "Air conditioning", "Laptop friendly workspace", "Baby seat", Washer, Towels, Fridge]
+          example: ["Breakfast", "Air conditioning"]
+        latitude:
+          type: number
+          example: 52.370216
+        longitude:
+          type: number
+          example: 4.895168
+
+    UpdateOffer:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 10
+          maxLength: 100
+          example: "Updated apartment title"
+        description:
+          type: string
+          minLength: 20
+          maxLength: 1024
+          example: "Updated description"
+        previewImage:
+          type: string
+          example: "img/updated-preview.jpg"
+        images:
+          type: array
+          minItems: 6
+          maxItems: 6
+          items:
+            type: string
+        isPremium:
+          type: boolean
+          example: false
+        type:
+          type: string
+          enum: [apartment, house, room, hotel]
+        bedrooms:
+          type: integer
+          minimum: 1
+          maximum: 8
+        maxAdults:
+          type: integer
+          minimum: 1
+          maximum: 10
+        price:
+          type: integer
+          minimum: 100
+          maximum: 100000
+        goods:
+          type: array
+          items:
+            type: string
+            enum: ["Breakfast", "Air conditioning", "Laptop friendly workspace", "Baby seat", "Washer", "Towels", "Fridge"]
+
+    OfferShort:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "507f1f77bcf86cd799439012"
+        title:
+          type: string
+          example: "Beautiful & luxurious apartment"
+        city:
+          type: string
+          example: "Amsterdam"
+        previewImage:
+          type: string
+          example: "img/apartment-01.jpg"
+        isPremium:
+          type: boolean
+          example: true
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          example: 4.8
+        type:
+          type: string
+          example: "apartment"
+        price:
+          type: integer
+          example: 120
+        isFavorite:
+          type: boolean
+          example: true
+        commentsCount:
+          type: integer
+          example: 5
+
+    OfferFull:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "507f1f77bcf86cd799439012"
+        title:
+          type: string
+          example: "Beautiful & luxurious apartment"
+        description:
+          type: string
+          example: "A quiet cozy and picturesque apartment"
+        city:
+          type: string
+          example: "Amsterdam"
+        previewImage:
+          type: string
+          example: "img/apartment-01.jpg"
+        images:
+          type: array
+          items:
+            type: string
+          example: ["img/apartment-01.jpg", "img/apartment-02.jpg", "img/apartment-03.jpg"]
+        isPremium:
+          type: boolean
+          example: true
+        rating:
+          type: number
+          example: 4.8
+        type:
+          type: string
+          example: "apartment"
+        bedrooms:
+          type: integer
+          example: 3
+        maxAdults:
+          type: integer
+          example: 4
+        price:
+          type: integer
+          example: 120
+        goods:
+          type: array
+          items:
+            type: string
+          example: ["Breakfast", "Air conditioning"]
+        author:
+          $ref: '#/components/schemas/User'
+        commentsCount:
+          type: integer
+          example: 5
+        latitude:
+          type: number
+          example: 52.370216
+        longitude:
+          type: number
+          example: 4.895168
+
+    CreateComment:
+      type: object
+      required: [text, rating]
+      properties:
+        text:
+          type: string
+          minLength: 5
+          maxLength: 1024
+          example: "A quiet cozy and picturesque apartment"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "507f1f77bcf86cd799439013"
+        text:
+          type: string
+          example: "A quiet cozy and picturesque apartment"
+        rating:
+          type: integer
+          example: 4
+        author:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-04-09T12:00:00Z"
