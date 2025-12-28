@@ -1,47 +1,43 @@
-import { Command } from './command.interface.js';
 import { CommandParser } from './command-parser.js';
-
-type CommandCollection = Record<string, Command>;
+import { Command } from './command.interface.js';
 
 export class CLIApplication {
-  private readonly commands: CommandCollection = {};
+  private commands: Record<string, Command> = {};
 
   constructor(private readonly defaultCommand: string = '--help') {}
 
-  public registerCommands(commandList: Command[]): void {
+  registerCommands(commandList: Command[]): void {
     commandList.forEach((command) => {
       const commandName = command.getName();
-
       if (this.commands[commandName]) {
         throw new Error(`Command ${commandName} is already registered`);
       }
-
       this.commands[commandName] = command;
     });
   }
 
-  public getCommand(commandName: string): Command {
+  getCommand(commandName: string): Command {
     return this.commands[commandName] ?? this.getDefaultCommand();
   }
 
-  public getDefaultCommand(): Command | never {
+  getDefaultCommand(): Command {
     if (!this.commands[this.defaultCommand]) {
       throw new Error(`The default command (${this.defaultCommand}) is not registered.`);
     }
-
     return this.commands[this.defaultCommand];
   }
 
-  public processCommand(argv: string[]): void {
+  processCommand(argv: string[]): void {
     const parsedCommand = CommandParser.parse(argv);
-    const [commandName, parameters] = parsedCommand;
 
-    if (commandName === '') {
+    if (Object.keys(parsedCommand).length === 0) {
       this.getDefaultCommand().execute();
       return;
     }
 
-    const command = this.getCommand(commandName);
-    command.execute(...parameters);
+    for (const [commandName, parameters] of Object.entries(parsedCommand)) {
+      const command = this.getCommand(commandName);
+      command.execute(...parameters);
+    }
   }
 }
