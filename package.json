@@ -1,4 +1,6 @@
 {
+  "name": "six-cities",
+  "version": "1.0.0",
   "scripts": {
     "start": "npm run build && node ./dist/main.rest.js",
     "start:dev": "npm run build && node ./dist/main.rest.js | pino-pretty",
@@ -8,7 +10,11 @@
     "clean": "rimraf dist",
     "ts": "ts-node",
     "cli": "node ./dist/main.cli.js",
-    "mock:server": "json-server ./mocks/mock-server-data.json --port 3123"
+    "mock:server": "json-server ./mocks/mock-server-data.json --port 3123",
+    "import:test": "node ./dist/main.cli.js --import ./mocks/mock-data.tsv ${DB_USER} ${DB_PASSWORD} ${DB_HOST} ${DB_PORT} ${DB_NAME} ${SALT}",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "setup": "if not exist .env copy .env.example .env && echo Edit .env file with your passwords"
   },
   "devDependencies": {
     "@types/convict": "^6.1.6",
@@ -30,12 +36,14 @@
     "npm": ">=8"
   },
   "dependencies": {
+    "@typegoose/typegoose": "^12.20.0",
     "axios": "^1.6.2",
     "chalk": "^5.6.2",
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
     "dotenv": "^17.2.3",
     "inversify": "^7.10.4",
+    "mongoose": "^9.0.1",
     "pino": "^10.1.0",
     "reflect-metadata": "^0.2.2"
   }

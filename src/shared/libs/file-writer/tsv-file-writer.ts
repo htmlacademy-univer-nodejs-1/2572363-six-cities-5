@@ -3,11 +3,13 @@ import { FileWriter } from './file-writer.interface.js';
 
 export class TSVFileWriter implements FileWriter {
   private stream: WriteStream;
+  private CHUCK_SIZE = 2 ** 16;
 
   constructor(filename: string) {
     this.stream = createWriteStream(filename, {
       flags: 'w',
       encoding: 'utf-8',
+      highWaterMark: this.CHUCK_SIZE,
       autoClose: true,
     });
   }
