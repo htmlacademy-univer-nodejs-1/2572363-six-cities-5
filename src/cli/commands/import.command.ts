@@ -8,6 +8,8 @@ import { MongoDatabaseClient } from '../../core/database-client/index.js';
 import { getMongoURI } from '../../shared/utils/index.js';
 import { DefaultOfferService } from '../../models/offer/default-offer.service.js';
 import { Command } from '../command.interface.js';
+import { Component } from '../../types/component.enum.js';
+import { createRestApplicationContainer } from '../../core/container/rest.container.js';
 
 export class ImportCommand implements Command {
   private processedCount = 0;
@@ -41,8 +43,10 @@ export class ImportCommand implements Command {
     this.databaseClient = new MongoDatabaseClient(this.logger);
     await this.databaseClient.connect(connectionString);
     this.isConnected = true;
-    this.userService = new DefaultUserService(this.logger);
-    this.offerService = new DefaultOfferService(this.logger);
+
+    const container = createRestApplicationContainer();
+    this.userService = container.get<DefaultUserService>(Component.UserService);
+    this.offerService = container.get<DefaultOfferService>(Component.OfferService);
   }
 
   private async closeDatabaseConnection(): Promise<void> {
