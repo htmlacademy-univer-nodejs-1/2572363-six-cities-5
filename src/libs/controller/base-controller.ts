@@ -4,11 +4,20 @@ import asyncHandler from 'express-async-handler';
 import { StatusCodes } from 'http-status-codes';
 import { Controller } from './controller.interface.js';
 import { Logger } from '../../core/logger/logger.interface.js';
+import { Middleware } from '../middleware/middleware.interface.js';
+
+interface Route {
+  path: string;
+  method: 'get' | 'post' | 'put' | 'delete';
+  handler: (req: Request, res: Response, next: NextFunction) => void;
+  middlewares?: Middleware[];
+}
 
 @injectable()
 export abstract class BaseController implements Controller {
   private readonly _router: Router;
   protected readonly logger: Logger;
+  private readonly routes: Route[] = [];
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -16,16 +25,28 @@ export abstract class BaseController implements Controller {
   }
 
   get router(): Router {
+    for (const route of this.routes) {
+      const middlewares = route.middlewares?.map((middleware) =>
+        asyncHandler(middleware.execute.bind(middleware))
+      ) || [];
+
+      const handler = asyncHandler(route.handler.bind(this));
+      const allHandlers = [...middlewares, handler];
+
+      this._router[route.method](route.path, allHandlers);
+      this.logger.info(`Route registered: ${route.method.toUpperCase()} ${route.path}`);
+    }
+
     return this._router;
   }
 
   protected addRoute(
     path: string,
     method: 'get' | 'post' | 'put' | 'delete',
-    handler: (req: Request, res: Response, next: NextFunction) => void
+    handler: (req: Request, res: Response, next: NextFunction) => void,
+    middlewares?: Middleware[]
   ): void {
-    this._router[method](path, asyncHandler(handler.bind(this)));
-    this.logger.info(`Route registered: ${method.toUpperCase()} ${path}`);
+    this.routes.push({ path, method, handler, middlewares });
   }
 
   protected send<T>(res: Response, statusCode: number, data: T): void {

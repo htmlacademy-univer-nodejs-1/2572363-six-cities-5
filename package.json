@@ -50,6 +50,7 @@
     "inversify": "^7.10.4",
     "mongoose": "^9.0.1",
     "pino": "^10.1.0",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "class-validator": "^0.14.0"
   }
 }

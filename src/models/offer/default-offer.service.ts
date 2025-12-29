@@ -55,7 +55,11 @@ export class DefaultOfferService implements OfferService {
 
   public async deleteById(offerId: string): Promise<DocumentType<OfferEntity> | null> {
     try {
-      return await OfferModel.findByIdAndDelete(offerId).exec();
+      const result = await OfferModel.findByIdAndDelete(offerId).exec();
+      if (result) {
+        await this.commentService.deleteByOfferId(offerId);
+      }
+      return result;
     } catch (error) {
       this.logger.error(`Failed to delete offer: ${offerId}`, error as Error);
       return null;

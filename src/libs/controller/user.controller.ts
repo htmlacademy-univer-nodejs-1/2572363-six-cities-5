@@ -12,6 +12,7 @@ import { HttpError } from '../../errors/http-error.js';
 import { StatusCodes } from 'http-status-codes';
 import { fillDTO, transformEntityForResponse } from '../helpers/index.js';
 import { UserRdo } from '../rdo/user.rdo.js';
+import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
 
 @injectable()
 export class UserController extends BaseController {
@@ -23,8 +24,14 @@ export class UserController extends BaseController {
     super(logger);
     this.logger.info('Register routes for UserController...');
 
-    this.addRoute('/users/register', 'post', this.create);
-    this.addRoute('/users/login', 'post', this.login);
+    this.addRoute('/users/register', 'post', this.create, [
+      new ValidateDtoMiddleware(CreateUserDto)
+    ]);
+
+    this.addRoute('/users/login', 'post', this.login, [
+      new ValidateDtoMiddleware(LoginUserDto)
+    ]);
+
     this.addRoute('/users/check', 'get', this.check);
   }
 
