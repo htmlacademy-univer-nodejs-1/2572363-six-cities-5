@@ -18,6 +18,11 @@ import { types } from '@typegoose/typegoose';
 import { UserModel, UserEntity } from '../../models/user/user.entity.js';
 import { OfferModel, OfferEntity } from '../../models/offer/offer.entity.js';
 import { CommentModel, CommentEntity } from '../../models/comment/comment.entity.js';
+import { ExceptionFilter } from '../../libs/exception-filter/exception-filter.interface.js';
+import { AppExceptionFilter } from '../../libs/exception-filter/app.exception-filter.js';
+import { UserController } from '../../libs/controller/user.controller.js';
+import { OfferController } from '../../libs/controller/offer.controller.js';
+import { CommentController } from '../../libs/controller/comment.controller.js';
 
 export function createRestApplicationContainer() {
   const restApplicationContainer = new Container();
@@ -26,10 +31,15 @@ export function createRestApplicationContainer() {
   restApplicationContainer.bind<Logger>(Component.Logger).to(PinoLoggerService).inSingletonScope();
   restApplicationContainer.bind<Config<RestSchema>>(Component.Config).to(RestConfig).inSingletonScope();
   restApplicationContainer.bind<DatabaseClient>(Component.DatabaseClient).to(MongoDatabaseClient).inSingletonScope();
+  restApplicationContainer.bind<ExceptionFilter>(Component.ExceptionFilter).to(AppExceptionFilter).inSingletonScope();
 
   restApplicationContainer.bind<UserService>(Component.UserService).to(DefaultUserService);
   restApplicationContainer.bind<OfferService>(Component.OfferService).to(DefaultOfferService);
   restApplicationContainer.bind<CommentService>(Component.CommentService).to(DefaultCommentService);
+
+  restApplicationContainer.bind<UserController>(Component.UserController).to(UserController);
+  restApplicationContainer.bind<OfferController>(Component.OfferController).to(OfferController);
+  restApplicationContainer.bind<CommentController>(Component.CommentController).to(CommentController);
 
   restApplicationContainer.bind<types.ModelType<UserEntity>>(Component.UserModel).toConstantValue(UserModel);
   restApplicationContainer.bind<types.ModelType<OfferEntity>>(Component.OfferModel).toConstantValue(OfferModel);
