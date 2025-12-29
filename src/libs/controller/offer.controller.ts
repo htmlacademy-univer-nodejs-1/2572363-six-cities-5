@@ -5,6 +5,7 @@ import { Logger } from '../../core/logger/logger.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { OfferService } from '../../models/offer/offer-service.interface.js';
 import { CommentService } from '../../models/comment/comment-service.interface.js';
+import { UserService } from '../../models/user/user-service.interface.js';
 import { CreateOfferDto } from '../../models/offer/dto/create-offer.dto.js';
 import { UpdateOfferDto } from '../../models/offer/dto/update-offer.dto.js';
 import { fillDTO, transformEntityForResponse } from '../helpers/index.js';
@@ -15,6 +16,8 @@ import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js'
 import { DocumentExistsMiddleware } from '../middleware/document-exists.middleware.js';
 import { CommentRdo } from '../rdo/comment.rdo.js';
 import { PrivateRouteMiddleware } from '../../lib/auth/private-route.middleware.js';
+import { HttpError } from '../../errors/http-error.js';
+import { StatusCodes } from 'http-status-codes';
 
 @injectable()
 export class OfferController extends BaseController {
@@ -22,6 +25,7 @@ export class OfferController extends BaseController {
     @inject(Component.Logger) protected readonly logger: Logger,
     @inject(Component.OfferService) private readonly offerService: OfferService,
     @inject(Component.CommentService) private readonly commentService: CommentService,
+    @inject(Component.UserService) private readonly userService: UserService,
   ) {
     super(logger);
     this.logger.info('Register routes for OfferController...');
@@ -77,7 +81,9 @@ export class OfferController extends BaseController {
   ): Promise<void> {
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 60;
     const city = req.query.city as string;
-    const offers = await this.offerService.find(limit, city);
+    const userId = req.tokenPayload?.id;
+
+    const offers = await this.offerService.find(limit, city, userId);
 
     const offerResponse = offers.map((offer) => {
       const transformedOffer = transformEntityForResponse(offer);
@@ -111,7 +117,16 @@ export class OfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { offerId } = req.params;
+    const userId = req.tokenPayload?.id;
+
     const offer = await this.offerService.findById(offerId);
+
+    if (offer && userId) {
+      const isFavorite = await this.userService.isOfferInFavorites(userId, offerId);
+      (offer as any).isFavorite = isFavorite;
+    } else if (offer) {
+      (offer as any).isFavorite = false;
+    }
 
     const transformedOffer = transformEntityForResponse(offer);
     const responseData = fillDTO(OfferFullRdo, transformedOffer);
@@ -124,6 +139,32 @@ export class OfferController extends BaseController {
   ): Promise<void> {
     const { offerId } = req.params;
     const body = req.body as UpdateOfferDto;
+
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'User not authenticated',
+        'OfferController'
+      );
+    }
+
+    const offer = await this.offerService.findById(offerId);
+    if (!offer) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `Offer with id ${offerId} not found`,
+        'OfferController'
+      );
+    }
+
+    if (offer.author.toString() !== req.tokenPayload.id) {
+      throw new HttpError(
+        StatusCodes.FORBIDDEN,
+        'You can only edit your own offers',
+        'OfferController'
+      );
+    }
+
     const updatedOffer = await this.offerService.updateById(offerId, body);
 
     const transformedOffer = transformEntityForResponse(updatedOffer);
@@ -136,6 +177,32 @@ export class OfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { offerId } = req.params;
+
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'User not authenticated',
+        'OfferController'
+      );
+    }
+
+    const offer = await this.offerService.findById(offerId);
+    if (!offer) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `Offer with id ${offerId} not found`,
+        'OfferController'
+      );
+    }
+
+    if (offer.author.toString() !== req.tokenPayload.id) {
+      throw new HttpError(
+        StatusCodes.FORBIDDEN,
+        'You can only delete your own offers',
+        'OfferController'
+      );
+    }
+
     await this.offerService.deleteById(offerId);
 
     this.noContent(res);
@@ -160,7 +227,9 @@ export class OfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { city } = req.params;
-    const offers = await this.offerService.findPremiumByCity(city, 3);
+    const userId = req.tokenPayload?.id;
+
+    const offers = await this.offerService.findPremiumByCity(city, 3, userId);
 
     const responseData = offers.map((offer) => {
       const transformedOffer = transformEntityForResponse(offer);
@@ -170,10 +239,24 @@ export class OfferController extends BaseController {
   }
 
   public async getFavorites(
-    _req: Request,
+    req: Request,
     res: Response,
   ): Promise<void> {
-    this.unauthorized(res, 'Not implemented yet');
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'User not authenticated',
+        'OfferController'
+      );
+    }
+
+    const offers = await this.offerService.findFavorites(req.tokenPayload.id);
+
+    const responseData = offers.map((offer) => {
+      const transformedOffer = transformEntityForResponse(offer);
+      return fillDTO(OfferShortRdo, transformedOffer);
+    });
+    this.ok(res, responseData);
   }
 
   public async addFavorite(
@@ -182,8 +265,26 @@ export class OfferController extends BaseController {
   ): Promise<void> {
     const { offerId } = req.params;
 
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'User not authenticated',
+        'OfferController'
+      );
+    }
+
+    const updatedUser = await this.userService.addToFavorites(req.tokenPayload.id, offerId);
+
+    if (!updatedUser) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `User not found`,
+        'OfferController'
+      );
+    }
+
     this.ok(res, {
-      message: `Added offer ${offerId} to favorites (not implemented)`,
+      message: `Added offer ${offerId} to favorites`,
       offerId
     });
   }
@@ -194,8 +295,26 @@ export class OfferController extends BaseController {
   ): Promise<void> {
     const { offerId } = req.params;
 
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'User not authenticated',
+        'OfferController'
+      );
+    }
+
+    const updatedUser = await this.userService.removeFromFavorites(req.tokenPayload.id, offerId);
+
+    if (!updatedUser) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `User not found`,
+        'OfferController'
+      );
+    }
+
     this.ok(res, {
-      message: `Removed offer ${offerId} from favorites (not implemented)`,
+      message: `Removed offer ${offerId} from favorites`,
       offerId
     });
   }

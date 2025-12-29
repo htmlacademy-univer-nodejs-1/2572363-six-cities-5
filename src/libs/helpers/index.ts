@@ -43,5 +43,11 @@ export function transformEntityForResponse<T>(entity: T): T {
     ? (entity as any).toObject()
     : entity;
 
-  return transformEntity(plainObject);
+  const result = transformEntity(plainObject);
+
+  if ('isFavorite' in entity) {
+    (result as any).isFavorite = (entity as any).isFavorite;
+  }
+
+  return result;
 }

@@ -1,7 +1,8 @@
-import typegoose, { getModelForClass, defaultClasses } from '@typegoose/typegoose';
+import typegoose, { getModelForClass, defaultClasses, Ref } from '@typegoose/typegoose';
 import { City } from '../../types/city.enum.js';
 import { OfferType } from '../../types/offer-type.enum.js';
 import { Goods } from '../../types/goods.enum.js';
+import { UserEntity } from '../user/user.entity.js';
 
 const { prop, modelOptions } = typegoose;
 
@@ -11,6 +12,14 @@ export interface OfferEntity extends defaultClasses.Base {}
   schemaOptions: {
     collection: 'offers',
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false
+    },
+    toObject: {
+      virtuals: true,
+      versionKey: false
+    }
   }
 })
 export class OfferEntity extends defaultClasses.TimeStamps {
@@ -35,7 +44,10 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({ required: true, default: false })
   public isPremium!: boolean;
 
-  @prop({ required: true, min: 1, max: 5 })
+  @prop({ required: true, default: false })
+  public isFavorite!: boolean;
+
+  @prop({ required: true, min: 1, max: 5, default: 0 })
   public rating!: number;
 
   @prop({ required: true, enum: OfferType })
@@ -53,8 +65,8 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({ required: true, type: () => [String], enum: Goods })
   public goods!: Goods[];
 
-  @prop({ required: true, ref: 'UserEntity' })
-  public author!: typegoose.Ref<typegoose.DocumentType<import('../user/user.entity.js').UserEntity>>;
+  @prop({ required: true, ref: UserEntity })
+  public author!: Ref<UserEntity>;
 
   @prop({ required: true, default: 0 })
   public commentsCount!: number;

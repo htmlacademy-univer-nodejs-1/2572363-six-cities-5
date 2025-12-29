@@ -9,11 +9,12 @@ interface CreateOfferData extends Omit<CreateOfferDto, 'author'> {
 export interface OfferService {
   create(dto: CreateOfferData): Promise<DocumentType<OfferEntity>>;
   findById(offerId: string): Promise<DocumentType<OfferEntity> | null>;
-  find(limit: number, city?: string): Promise<DocumentType<OfferEntity>[]>;
+  find(limit: number, city?: string, userId?: string): Promise<DocumentType<OfferEntity>[]>;
   deleteById(offerId: string): Promise<DocumentType<OfferEntity> | null>;
   updateById(offerId: string, dto: Partial<CreateOfferData>): Promise<DocumentType<OfferEntity> | null>;
-  findPremiumByCity(city: string, limit?: number): Promise<DocumentType<OfferEntity>[]>;
+  findPremiumByCity(city: string, limit?: number, userId?: string): Promise<DocumentType<OfferEntity>[]>;
   updateRating(offerId: string): Promise<DocumentType<OfferEntity> | null>;
   incCommentCount(offerId: string): Promise<DocumentType<OfferEntity> | null>;
   exists(offerId: string): Promise<boolean>;
+  findFavorites(userId: string): Promise<DocumentType<OfferEntity>[]>;
 }

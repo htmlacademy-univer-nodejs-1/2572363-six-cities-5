@@ -7,6 +7,7 @@ import { UserService } from './user-service.interface.js';
 import { Logger } from '../../core/logger/logger.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { UserModel } from './user.entity.js';
+import { Types } from 'mongoose';
 
 @injectable()
 export class DefaultUserService implements UserService {
@@ -88,6 +89,60 @@ export class DefaultUserService implements UserService {
     } catch (error) {
       this.logger.error(`Failed to find user by id: ${userId}`, error as Error);
       return null;
+    }
+  }
+
+  public async addToFavorites(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel.findByIdAndUpdate(
+        userId,
+        { $addToSet: { favoriteOffers: new Types.ObjectId(offerId) } },
+        { new: true }
+      ).exec();
+    } catch (error) {
+      this.logger.error(`Failed to add offer ${offerId} to favorites for user ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async removeFromFavorites(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
+    try {
+      return await UserModel.findByIdAndUpdate(
+        userId,
+        { $pull: { favoriteOffers: new Types.ObjectId(offerId) } },
+        { new: true }
+      ).exec();
+    } catch (error) {
+      this.logger.error(`Failed to remove offer ${offerId} from favorites for user ${userId}`, error as Error);
+      return null;
+    }
+  }
+
+  public async getFavorites(userId: string): Promise<string[]> {
+    try {
+      const user = await UserModel.findById(userId).select('favoriteOffers').exec();
+      if (!user) {
+        return [];
+      }
+
+      return user.favoriteOffers.map(offer => offer.toString());
+    } catch (error) {
+      this.logger.error(`Failed to get favorites for user ${userId}`, error as Error);
+      return [];
+    }
+  }
+
+  public async isOfferInFavorites(userId: string, offerId: string): Promise<boolean> {
+    try {
+      const user = await UserModel.findOne({
+        _id: userId,
+        favoriteOffers: new Types.ObjectId(offerId)
+      }).exec();
+
+      return !!user;
+    } catch (error) {
+      this.logger.error(`Failed to check if offer ${offerId} is in favorites for user ${userId}`, error as Error);
+      return false;
     }
   }
 }

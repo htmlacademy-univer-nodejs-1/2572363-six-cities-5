@@ -52,4 +52,7 @@ export class OfferFullRdo {
 
   @Expose()
   public longitude!: number;
+
+  @Expose()
+  public isFavorite!: boolean;
 }
