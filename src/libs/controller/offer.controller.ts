@@ -18,6 +18,7 @@ import { CommentRdo } from '../rdo/comment.rdo.js';
 import { PrivateRouteMiddleware } from '../../lib/auth/private-route.middleware.js';
 import { HttpError } from '../../errors/http-error.js';
 import { StatusCodes } from 'http-status-codes';
+import { Types } from 'mongoose';
 
 @injectable()
 export class OfferController extends BaseController {
@@ -102,10 +103,12 @@ export class OfferController extends BaseController {
       throw new Error('User not authenticated');
     }
 
-    const result = await this.offerService.create({
+    const offerData: CreateOfferDto = {
       ...body,
       author: req.tokenPayload.id
-    } as any);
+    };
+
+    const result = await this.offerService.create(offerData);
 
     const transformedResult = transformEntityForResponse(result);
     const responseData = fillDTO(OfferFullRdo, transformedResult);
@@ -157,7 +160,11 @@ export class OfferController extends BaseController {
       );
     }
 
-    if (offer.author.toString() !== req.tokenPayload.id) {
+    const authorId = offer.author instanceof Types.ObjectId
+      ? offer.author.toString()
+      : offer.author._id?.toString() || offer.author.toString();
+
+    if (authorId !== req.tokenPayload.id) {
       throw new HttpError(
         StatusCodes.FORBIDDEN,
         'You can only edit your own offers',
@@ -195,7 +202,11 @@ export class OfferController extends BaseController {
       );
     }
 
-    if (offer.author.toString() !== req.tokenPayload.id) {
+    const authorId = offer.author instanceof Types.ObjectId
+      ? offer.author.toString()
+      : offer.author._id?.toString() || offer.author.toString();
+
+    if (authorId !== req.tokenPayload.id) {
       throw new HttpError(
         StatusCodes.FORBIDDEN,
         'You can only delete your own offers',

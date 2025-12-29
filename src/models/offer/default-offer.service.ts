@@ -1,17 +1,14 @@
-import {inject, injectable} from 'inversify';
-import {DocumentType} from '@typegoose/typegoose';
-import {OfferEntity, OfferModel} from './offer.entity.js';
-import {CreateOfferDto} from './dto/create-offer.dto.js';
-import {OfferService} from './offer-service.interface.js';
-import {Logger} from '../../core/logger/logger.interface.js';
-import {Component} from '../../types/component.enum.js';
-import {City} from '../../types/city.enum.js';
-import {CommentService} from '../comment/comment-service.interface.js';
-import {UserService} from '../user/user-service.interface.js';
-
-interface CreateOfferData extends Omit<CreateOfferDto, 'author'> {
-  author: string;
-}
+import { inject, injectable } from 'inversify';
+import { DocumentType } from '@typegoose/typegoose';
+import { OfferEntity } from './offer.entity.js';
+import { CreateOfferDto } from './dto/create-offer.dto.js';
+import { OfferService } from './offer-service.interface.js';
+import { Logger } from '../../core/logger/logger.interface.js';
+import { Component } from '../../types/component.enum.js';
+import { OfferModel } from './offer.entity.js';
+import { City } from '../../types/city.enum.js';
+import { CommentService } from '../comment/comment-service.interface.js';
+import { UserService } from '../user/user-service.interface.js';
 
 @injectable()
 export class DefaultOfferService implements OfferService {
@@ -21,8 +18,12 @@ export class DefaultOfferService implements OfferService {
     @inject(Component.UserService) private readonly userService: UserService
   ) {}
 
-  public async create(dto: CreateOfferData): Promise<DocumentType<OfferEntity>> {
+  public async create(dto: CreateOfferDto): Promise<DocumentType<OfferEntity>> {
     try {
+      if (!dto.author) {
+        throw new Error('Author is required to create an offer');
+      }
+
       const result = await OfferModel.create(dto);
       this.logger.info(`Created offer: ${dto.title}`);
       return result;
@@ -55,7 +56,8 @@ export class DefaultOfferService implements OfferService {
 
       if (userId) {
         for (const offer of offers) {
-          (offer as any).isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          const isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          (offer as any).isFavorite = isFavorite;
         }
       } else {
         for (const offer of offers) {
@@ -83,7 +85,7 @@ export class DefaultOfferService implements OfferService {
     }
   }
 
-  public async updateById(offerId: string, dto: Partial<CreateOfferData>): Promise<DocumentType<OfferEntity> | null> {
+  public async updateById(offerId: string, dto: Partial<CreateOfferDto>): Promise<DocumentType<OfferEntity> | null> {
     try {
       return await OfferModel
         .findByIdAndUpdate(offerId, dto, { new: true })
@@ -108,7 +110,8 @@ export class DefaultOfferService implements OfferService {
 
       if (userId) {
         for (const offer of offers) {
-          (offer as any).isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          const isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          (offer as any).isFavorite = isFavorite;
         }
       } else {
         for (const offer of offers) {

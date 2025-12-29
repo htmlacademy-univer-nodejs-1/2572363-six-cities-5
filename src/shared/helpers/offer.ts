@@ -4,11 +4,7 @@ import { Goods } from '../../types/goods.enum.js';
 import { CreateOfferDto } from '../../models/offer/dto/create-offer.dto.js';
 import { CreateUserDto } from '../../models/user/dto/create-user.dto.js';
 
-interface CreateOfferData extends Omit<CreateOfferDto, 'author'> {
-  author: string;
-}
-
-export function parseTSVLine(line: string): { userDto: CreateUserDto; offerDto: CreateOfferData } {
+export function parseTSVLine(line: string): { userDto: CreateUserDto; offerDto: CreateOfferDto } {
   const [
     title,
     description,
@@ -41,7 +37,7 @@ export function parseTSVLine(line: string): { userDto: CreateUserDto; offerDto: 
     userDto.avatar = userData.avatar;
   }
 
-  const offerDto: CreateOfferData = {
+  const offerDto: CreateOfferDto = {
     title,
     description,
     publishedDate: new Date(publishedDate),
@@ -55,7 +51,6 @@ export function parseTSVLine(line: string): { userDto: CreateUserDto; offerDto: 
     maxAdults: parseInt(maxAdultsStr, 10),
     price: parseInt(priceStr, 10),
     goods: JSON.parse(goodsStr) as Goods[],
-    author: '',
     commentsCount: parseInt(commentsCountStr, 10),
     latitude: parseFloat(latitudeStr),
     longitude: parseFloat(longitudeStr)
