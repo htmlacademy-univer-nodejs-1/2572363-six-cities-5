@@ -14,29 +14,31 @@ export class DefaultCommentService implements CommentService {
     @inject(Component.Logger) private readonly logger: Logger
   ) {}
 
-  public async create(dto: CreateCommentDto): Promise<DocumentType<CommentEntity>> {
+  public async create(dto: CreateCommentDto, offerId: string): Promise<DocumentType<CommentEntity>> {
     try {
       const result = await CommentModel.create({
-        ...dto,
-        offer: new Types.ObjectId(dto.offerId),
-        author: new Types.ObjectId(dto.userId)
+        text: dto.text,
+        rating: dto.rating,
+        offer: offerId,
+        author: dto.userId
       });
-      this.logger.info(`New comment created for offer: ${dto.offerId}`);
-      return result;
+      this.logger.info(`New comment created for offer: ${offerId}`);
+      return result.populate('author');
     } catch (error) {
-      this.logger.error(`Comment creation failed for offer: ${dto.offerId}`, error as Error);
+      this.logger.error(`Comment creation failed for offer: ${offerId}`, error as Error);
       throw error;
     }
   }
 
   public async findByOfferId(offerId: string, limit = 50): Promise<DocumentType<CommentEntity>[]> {
     try {
-      return await CommentModel
-        .find({offerId})
-        .populate('author')
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .exec();
+      const query = CommentModel.find();
+      query.where('offer').equals(offerId);
+      query.populate('author');
+      query.sort({ createdAt: -1 });
+      query.limit(limit);
+
+      return await query.exec();
     } catch (error) {
       this.logger.error(`Failed to find comments for offer: ${offerId}`, error as Error);
       return [];
@@ -45,7 +47,10 @@ export class DefaultCommentService implements CommentService {
 
   public async deleteByOfferId(offerId: string): Promise<number | null> {
     try {
-      const result = await CommentModel.deleteMany({offerId}).exec();
+      const query = CommentModel.deleteMany();
+      query.where('offer').equals(offerId);
+
+      const result = await query.exec();
       this.logger.info(`Deleted ${result.deletedCount} comments for offer: ${offerId}`);
       return result.deletedCount;
     } catch (error) {
@@ -70,7 +75,10 @@ export class DefaultCommentService implements CommentService {
 
   public async countByOfferId(offerId: string): Promise<number> {
     try {
-      return await CommentModel.countDocuments({ offerId }).exec();
+      const query = CommentModel.countDocuments();
+      query.where('offer').equals(offerId);
+
+      return await query.exec();
     } catch (error) {
       this.logger.error(`Failed to count comments for offer: ${offerId}`, error as Error);
       return 0;

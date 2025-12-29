@@ -4,21 +4,34 @@ import { BaseController } from './base-controller.js';
 import { Logger } from '../../core/logger/logger.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { CommentService } from '../../models/comment/comment-service.interface.js';
+import { OfferService } from '../../models/offer/offer-service.interface.js';
 import { CreateCommentDto } from '../../models/comment/dto/create-comment.dto.js';
 import { fillDTO, transformEntityForResponse } from '../helpers/index.js';
 import { CommentRdo } from '../rdo/comment.rdo.js';
+import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.middleware.js';
+import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
+import { DocumentExistsMiddleware } from '../middleware/document-exists.middleware.js';
 
 @injectable()
 export class CommentController extends BaseController {
   constructor(
     @inject(Component.Logger) protected readonly logger: Logger,
     @inject(Component.CommentService) private readonly commentService: CommentService,
+    @inject(Component.OfferService) private readonly offerService: OfferService,
   ) {
     super(logger);
     this.logger.info('Register routes for CommentController...');
 
-    this.addRoute('/offers/:offerId/comments', 'get', this.index);
-    this.addRoute('/offers/:offerId/comments', 'post', this.create);
+    this.addRoute('/offers/:offerId/comments', 'get', this.index, [
+      new ValidateObjectIdMiddleware('offerId'),
+      new DocumentExistsMiddleware(this.offerService, 'offerId')
+    ]);
+
+    this.addRoute('/offers/:offerId/comments', 'post', this.create, [
+      new ValidateObjectIdMiddleware('offerId'),
+      new ValidateDtoMiddleware(CreateCommentDto),
+      new DocumentExistsMiddleware(this.offerService, 'offerId')
+    ]);
   }
 
   public async index(
@@ -42,11 +55,9 @@ export class CommentController extends BaseController {
     const { offerId } = req.params;
     const body = req.body as CreateCommentDto;
 
-    const result = await this.commentService.create({
-      ...body,
-      offerId,
-      userId: 'dummy-user-id-for-now'
-    });
+    const result = await this.commentService.create(body, offerId);
+
+    await this.offerService.updateRating(offerId);
 
     const transformedResult = transformEntityForResponse(result);
     const responseData = fillDTO(CommentRdo, transformedResult);

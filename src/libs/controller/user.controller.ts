@@ -13,6 +13,8 @@ import { StatusCodes } from 'http-status-codes';
 import { fillDTO, transformEntityForResponse } from '../helpers/index.js';
 import { UserRdo } from '../rdo/user.rdo.js';
 import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
+import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.middleware.js';
+import { UploadFileMiddleware } from '../middleware/upload-file.middleware.js';
 
 @injectable()
 export class UserController extends BaseController {
@@ -33,6 +35,11 @@ export class UserController extends BaseController {
     ]);
 
     this.addRoute('/users/check', 'get', this.check);
+
+    this.addRoute('/users/:userId/avatar', 'post', this.uploadAvatar, [
+      new ValidateObjectIdMiddleware('userId'),
+      new UploadFileMiddleware(this.config.get('UPLOAD_DIRECTORY'), 'avatar')
+    ]);
   }
 
   public async create(
@@ -87,5 +94,38 @@ export class UserController extends BaseController {
     res: Response,
   ): Promise<void> {
     this.unauthorized(res, 'Not implemented yet');
+  }
+
+  public async uploadAvatar(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    const { userId } = req.params;
+
+    if (!req.file) {
+      throw new HttpError(
+        StatusCodes.BAD_REQUEST,
+        'No avatar file uploaded',
+        'UserController'
+      );
+    }
+
+    const uploadDirectory = this.config.get('UPLOAD_DIRECTORY');
+    const uploadPath = uploadDirectory.startsWith('./') ? uploadDirectory.substring(2) : uploadDirectory;
+    const avatarPath = `/${uploadPath}/${req.file.filename}`;
+
+    const updatedUser = await this.userService.updateById(userId, { avatar: avatarPath });
+
+    if (!updatedUser) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `User with id ${userId} not found`,
+        'UserController'
+      );
+    }
+
+    const transformedUser = transformEntityForResponse(updatedUser);
+    const userData = fillDTO(UserRdo, transformedUser);
+    this.ok(res, userData);
   }
 }

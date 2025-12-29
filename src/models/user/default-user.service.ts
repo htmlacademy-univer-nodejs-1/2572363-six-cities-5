@@ -7,7 +7,6 @@ import { UserService } from './user-service.interface.js';
 import { Logger } from '../../core/logger/logger.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { UserModel } from './user.entity.js';
-import { OfferEntity } from '../offer/offer.entity.js';
 
 @injectable()
 export class DefaultUserService implements UserService {
@@ -89,57 +88,6 @@ export class DefaultUserService implements UserService {
     } catch (error) {
       this.logger.error(`Failed to find user by id: ${userId}`, error as Error);
       return null;
-    }
-  }
-
-  public async addFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
-    try {
-      return await UserModel
-        .findByIdAndUpdate(
-          userId,
-          { $addToSet: { offerId } },
-          { new: true }
-        )
-        .exec();
-    } catch (error) {
-      this.logger.error(`Failed to add favorite offer ${offerId} for user ${userId}`, error as Error);
-      return null;
-    }
-  }
-
-  public async removeFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null> {
-    try {
-      return await UserModel
-        .findByIdAndUpdate(
-          userId,
-          { $pull: { offerId } },
-          { new: true }
-        )
-        .exec();
-    } catch (error) {
-      this.logger.error(`Failed to remove favorite offer ${offerId} for user ${userId}`, error as Error);
-      return null;
-    }
-  }
-
-  public async getFavorites(userId: string): Promise<DocumentType<OfferEntity>[]> {
-    try {
-      const user = await UserModel
-        .findById(userId)
-        .populate({
-          path: 'favoriteOffers',
-          populate: { path: 'author' }
-        })
-        .exec();
-
-      if (!user || !user.favoriteOffers) {
-        return [];
-      }
-
-      return user.favoriteOffers as DocumentType<OfferEntity>[];
-    } catch (error) {
-      this.logger.error(`Failed to get favorites for user ${userId}`, error as Error);
-      return [];
     }
   }
 }

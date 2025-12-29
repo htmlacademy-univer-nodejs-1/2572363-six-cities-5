@@ -7,15 +7,13 @@ import { OfferService } from '../../models/offer/offer-service.interface.js';
 import { CommentService } from '../../models/comment/comment-service.interface.js';
 import { CreateOfferDto } from '../../models/offer/dto/create-offer.dto.js';
 import { UpdateOfferDto } from '../../models/offer/dto/update-offer.dto.js';
-import { HttpError } from '../../errors/http-error.js';
-import { StatusCodes } from 'http-status-codes';
 import { fillDTO, transformEntityForResponse } from '../helpers/index.js';
 import { OfferShortRdo } from '../rdo/offer-short.rdo.js';
 import { OfferFullRdo } from '../rdo/offer-full.rdo.js';
 import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.middleware.js';
 import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
-import { CommentRdo } from '../rdo/comment.rdo.js';
 import { DocumentExistsMiddleware } from '../middleware/document-exists.middleware.js';
+import { CommentRdo } from '../rdo/comment.rdo.js';
 
 @injectable()
 export class OfferController extends BaseController {
@@ -99,14 +97,6 @@ export class OfferController extends BaseController {
     const { offerId } = req.params;
     const offer = await this.offerService.findById(offerId);
 
-    if (!offer) {
-      throw new HttpError(
-        StatusCodes.NOT_FOUND,
-        `Offer with id «${offerId}» not found`,
-        'OfferController'
-      );
-    }
-
     const transformedOffer = transformEntityForResponse(offer);
     const responseData = fillDTO(OfferFullRdo, transformedOffer);
     this.ok(res, responseData);
@@ -120,14 +110,6 @@ export class OfferController extends BaseController {
     const body = req.body as UpdateOfferDto;
     const updatedOffer = await this.offerService.updateById(offerId, body);
 
-    if (!updatedOffer) {
-      throw new HttpError(
-        StatusCodes.NOT_FOUND,
-        `Offer with id «${offerId}» not found`,
-        'OfferController'
-      );
-    }
-
     const transformedOffer = transformEntityForResponse(updatedOffer);
     const responseData = fillDTO(OfferFullRdo, transformedOffer);
     this.ok(res, responseData);
@@ -138,15 +120,7 @@ export class OfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { offerId } = req.params;
-    const deletedOffer = await this.offerService.deleteById(offerId);
-
-    if (!deletedOffer) {
-      throw new HttpError(
-        StatusCodes.NOT_FOUND,
-        `Offer with id «${offerId}» not found`,
-        'OfferController'
-      );
-    }
+    await this.offerService.deleteById(offerId);
 
     this.noContent(res);
   }
