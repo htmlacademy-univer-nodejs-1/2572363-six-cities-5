@@ -66,8 +66,11 @@ export class ImportCommand implements Command {
     try {
       const { userDto, offerDto } = parseTSVLine(line);
       const userRecord = await this.userService!.findOrCreate(userDto, this.salt);
-      offerDto.author = userRecord.id.toString();
-      await this.offerService!.create(offerDto);
+      const offerData = {
+        ...offerDto,
+        author: userRecord.id.toString()
+      };
+      await this.offerService!.create(offerData);
       this.processedCount++;
 
       if (this.processedCount % 100 === 0) {

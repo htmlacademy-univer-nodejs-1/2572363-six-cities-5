@@ -14,6 +14,7 @@ import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.mid
 import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
 import { DocumentExistsMiddleware } from '../middleware/document-exists.middleware.js';
 import { CommentRdo } from '../rdo/comment.rdo.js';
+import { PrivateRouteMiddleware } from '../../lib/auth/private-route.middleware.js';
 
 @injectable()
 export class OfferController extends BaseController {
@@ -27,6 +28,7 @@ export class OfferController extends BaseController {
 
     this.addRoute('/offers', 'get', this.index);
     this.addRoute('/offers', 'post', this.create, [
+      new PrivateRouteMiddleware(),
       new ValidateDtoMiddleware(CreateOfferDto)
     ]);
 
@@ -36,12 +38,14 @@ export class OfferController extends BaseController {
     ]);
 
     this.addRoute('/offers/:offerId', 'put', this.update, [
+      new PrivateRouteMiddleware(),
       new ValidateObjectIdMiddleware('offerId'),
       new ValidateDtoMiddleware(UpdateOfferDto),
       new DocumentExistsMiddleware(this.offerService, 'offerId')
     ]);
 
     this.addRoute('/offers/:offerId', 'delete', this.delete, [
+      new PrivateRouteMiddleware(),
       new ValidateObjectIdMiddleware('offerId'),
       new DocumentExistsMiddleware(this.offerService, 'offerId')
     ]);
@@ -52,12 +56,16 @@ export class OfferController extends BaseController {
     ]);
 
     this.addRoute('/offers/premium_by_city/:city', 'get', this.getPremiumByCity);
-    this.addRoute('/favorites', 'get', this.getFavorites);
+    this.addRoute('/favorites', 'get', this.getFavorites, [
+      new PrivateRouteMiddleware()
+    ]);
     this.addRoute('/favorites/:offerId', 'post', this.addFavorite, [
+      new PrivateRouteMiddleware(),
       new ValidateObjectIdMiddleware('offerId'),
       new DocumentExistsMiddleware(this.offerService, 'offerId')
     ]);
     this.addRoute('/favorites/:offerId', 'delete', this.removeFavorite, [
+      new PrivateRouteMiddleware(),
       new ValidateObjectIdMiddleware('offerId'),
       new DocumentExistsMiddleware(this.offerService, 'offerId')
     ]);
@@ -83,7 +91,15 @@ export class OfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const body = req.body as CreateOfferDto;
-    const result = await this.offerService.create(body);
+
+    if (!req.tokenPayload) {
+      throw new Error('User not authenticated');
+    }
+
+    const result = await this.offerService.create({
+      ...body,
+      author: req.tokenPayload.id
+    } as any);
 
     const transformedResult = transformEntityForResponse(result);
     const responseData = fillDTO(OfferFullRdo, transformedResult);

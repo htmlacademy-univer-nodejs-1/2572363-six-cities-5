@@ -9,6 +9,10 @@ import { OfferModel } from './offer.entity.js';
 import { City } from '../../types/city.enum.js';
 import { CommentService } from '../comment/comment-service.interface.js';
 
+interface CreateOfferData extends Omit<CreateOfferDto, 'author'> {
+  author: string;
+}
+
 @injectable()
 export class DefaultOfferService implements OfferService {
   constructor(
@@ -16,7 +20,7 @@ export class DefaultOfferService implements OfferService {
     @inject(Component.CommentService) private readonly commentService: CommentService
   ) {}
 
-  public async create(dto: CreateOfferDto): Promise<DocumentType<OfferEntity>> {
+  public async create(dto: CreateOfferData): Promise<DocumentType<OfferEntity>> {
     try {
       const result = await OfferModel.create(dto);
       this.logger.info(`Created offer: ${dto.title}`);
@@ -66,7 +70,7 @@ export class DefaultOfferService implements OfferService {
     }
   }
 
-  public async updateById(offerId: string, dto: Partial<CreateOfferDto>): Promise<DocumentType<OfferEntity> | null> {
+  public async updateById(offerId: string, dto: Partial<CreateOfferData>): Promise<DocumentType<OfferEntity> | null> {
     try {
       return await OfferModel
         .findByIdAndUpdate(offerId, dto, { new: true })

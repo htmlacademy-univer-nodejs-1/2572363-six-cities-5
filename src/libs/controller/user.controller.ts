@@ -15,6 +15,8 @@ import { UserRdo } from '../rdo/user.rdo.js';
 import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
 import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.middleware.js';
 import { UploadFileMiddleware } from '../middleware/upload-file.middleware.js';
+import { AuthService } from '../../lib/auth/auth-service.interface.js';
+import { PrivateRouteMiddleware } from '../../lib/auth/private-route.middleware.js';
 
 @injectable()
 export class UserController extends BaseController {
@@ -22,6 +24,7 @@ export class UserController extends BaseController {
     @inject(Component.Logger) protected readonly logger: Logger,
     @inject(Component.UserService) private readonly userService: UserService,
     @inject(Component.Config) private readonly config: Config<RestSchema>,
+    @inject(Component.AuthService) private readonly authService: AuthService,
   ) {
     super(logger);
     this.logger.info('Register routes for UserController...');
@@ -34,10 +37,13 @@ export class UserController extends BaseController {
       new ValidateDtoMiddleware(LoginUserDto)
     ]);
 
-    this.addRoute('/users/check', 'get', this.check);
+    this.addRoute('/users/login', 'get', this.check, [
+      new PrivateRouteMiddleware()
+    ]);
 
     this.addRoute('/users/:userId/avatar', 'post', this.uploadAvatar, [
       new ValidateObjectIdMiddleware('userId'),
+      new PrivateRouteMiddleware(),
       new UploadFileMiddleware(this.config.get('UPLOAD_DIRECTORY'), 'avatar')
     ]);
   }
@@ -70,30 +76,41 @@ export class UserController extends BaseController {
     res: Response,
   ): Promise<void> {
     const body = req.body as LoginUserDto;
-    const salt = this.config.get('SALT');
-    const user = await this.userService.verifyUser(body.email, body.password, salt);
+    const user = await this.authService.verify(body);
+    const token = await this.authService.authenticate(user);
 
+    const transformedUser = transformEntityForResponse(user);
+    const userData = fillDTO(UserRdo, transformedUser);
+    this.ok(res, {
+      token,
+      user: userData
+    });
+  }
+
+  public async check(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    if (!req.tokenPayload) {
+      throw new HttpError(
+        StatusCodes.UNAUTHORIZED,
+        'Unauthorized',
+        'UserController'
+      );
+    }
+
+    const user = await this.userService.findByEmail(req.tokenPayload.email);
     if (!user) {
       throw new HttpError(
         StatusCodes.UNAUTHORIZED,
-        'Invalid email or password',
+        'User not found',
         'UserController'
       );
     }
 
     const transformedUser = transformEntityForResponse(user);
     const userData = fillDTO(UserRdo, transformedUser);
-    this.ok(res, {
-      token: 'dummy-token-for-now',
-      user: userData
-    });
-  }
-
-  public async check(
-    _req: Request,
-    res: Response,
-  ): Promise<void> {
-    this.unauthorized(res, 'Not implemented yet');
+    this.ok(res, userData);
   }
 
   public async uploadAvatar(

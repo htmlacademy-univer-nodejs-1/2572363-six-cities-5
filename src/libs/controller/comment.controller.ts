@@ -11,6 +11,7 @@ import { CommentRdo } from '../rdo/comment.rdo.js';
 import { ValidateObjectIdMiddleware } from '../middleware/validate-object-id.middleware.js';
 import { ValidateDtoMiddleware } from '../middleware/validate-dto.middleware.js';
 import { DocumentExistsMiddleware } from '../middleware/document-exists.middleware.js';
+import { PrivateRouteMiddleware } from '../../lib/auth/private-route.middleware.js';
 
 @injectable()
 export class CommentController extends BaseController {
@@ -28,6 +29,7 @@ export class CommentController extends BaseController {
     ]);
 
     this.addRoute('/offers/:offerId/comments', 'post', this.create, [
+      new PrivateRouteMiddleware(),
       new ValidateObjectIdMiddleware('offerId'),
       new ValidateDtoMiddleware(CreateCommentDto),
       new DocumentExistsMiddleware(this.offerService, 'offerId')
@@ -53,9 +55,19 @@ export class CommentController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { offerId } = req.params;
-    const body = req.body as CreateCommentDto;
 
-    const result = await this.commentService.create(body, offerId);
+    if (!req.tokenPayload) {
+      throw new Error('User not authenticated');
+    }
+
+    const body = req.body as CreateCommentDto;
+    const commentData = {
+      text: body.text,
+      rating: body.rating,
+      userId: req.tokenPayload.id
+    };
+
+    const result = await this.commentService.create(commentData as any, offerId);
 
     await this.offerService.updateRating(offerId);
 
