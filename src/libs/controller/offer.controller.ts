@@ -289,7 +289,7 @@ export class OfferController extends BaseController {
     if (!updatedUser) {
       throw new HttpError(
         StatusCodes.NOT_FOUND,
-        `User not found`,
+        'User not found',
         'OfferController'
       );
     }
@@ -319,7 +319,7 @@ export class OfferController extends BaseController {
     if (!updatedUser) {
       throw new HttpError(
         StatusCodes.NOT_FOUND,
-        `User not found`,
+        'User not found',
         'OfferController'
       );
     }

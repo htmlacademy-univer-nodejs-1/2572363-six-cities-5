@@ -125,7 +125,7 @@ export class DefaultUserService implements UserService {
         return [];
       }
 
-      return user.favoriteOffers.map(offer => offer.toString());
+      return user.favoriteOffers.map((offer) => offer.toString());
     } catch (error) {
       this.logger.error(`Failed to get favorites for user ${userId}`, error as Error);
       return [];
