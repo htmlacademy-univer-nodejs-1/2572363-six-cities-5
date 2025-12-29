@@ -11,6 +11,7 @@ import { ExceptionFilter } from '../../libs/exception-filter/exception-filter.in
 import { UserController } from '../../libs/controller/user.controller.js';
 import { OfferController } from '../../libs/controller/offer.controller.js';
 import { CommentController } from '../../libs/controller/comment.controller.js';
+import { ParseTokenMiddleware } from '../../lib/auth/parse-token.middleware.js';
 
 @injectable()
 export class RestApplication {
@@ -21,6 +22,7 @@ export class RestApplication {
     @inject(Component.Config) private readonly config: Config<RestSchema>,
     @inject(Component.DatabaseClient) private readonly databaseClient: DatabaseClient,
     @inject(Component.ExceptionFilter) private readonly exceptionFilter: ExceptionFilter,
+    @inject(Component.AuthExceptionFilter) private readonly authExceptionFilter: ExceptionFilter,
     @inject(Component.UserController) private readonly userController: UserController,
     @inject(Component.OfferController) private readonly offerController: OfferController,
     @inject(Component.CommentController) private readonly commentController: CommentController,
@@ -41,6 +43,9 @@ export class RestApplication {
   }
 
   private _initMiddleware() {
+    const parseTokenMiddleware = new ParseTokenMiddleware(this.config);
+    this.expressApplication.use(parseTokenMiddleware.execute.bind(parseTokenMiddleware));
+
     this.expressApplication.use(express.json());
     const uploadDirectory = this.config.get('UPLOAD_DIRECTORY');
     this.expressApplication.use('/upload', express.static(uploadDirectory));
@@ -53,6 +58,7 @@ export class RestApplication {
   }
 
   private _initExceptionFilters() {
+    this.expressApplication.use(this.authExceptionFilter.catch.bind(this.authExceptionFilter));
     this.expressApplication.use(this.exceptionFilter.catch.bind(this.exceptionFilter));
   }
 

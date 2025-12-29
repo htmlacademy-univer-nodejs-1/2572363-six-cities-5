@@ -1,0 +1,17 @@
+########################################
+# КОММЕНТАРИИ
+########################################
+
+### Получить комментарии для предложения
+GET http://localhost:4000/offers/OFFER_ID_HERE/comments HTTP/1.1
+
+
+### Создать новый комментарий (требуется токен)
+POST http://localhost:4000/offers/OFFER_ID_HERE/comments HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "text": "Отличное расположение и очень чистая квартира. Хозяин был очень отзывчивым. Рекомендую!",
+  "rating": 5
+}

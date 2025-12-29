@@ -51,7 +51,6 @@ export function parseTSVLine(line: string): { userDto: CreateUserDto; offerDto: 
     maxAdults: parseInt(maxAdultsStr, 10),
     price: parseInt(priceStr, 10),
     goods: JSON.parse(goodsStr) as Goods[],
-    author: '',
     commentsCount: parseInt(commentsCountStr, 10),
     latitude: parseFloat(latitudeStr),
     longitude: parseFloat(longitudeStr)

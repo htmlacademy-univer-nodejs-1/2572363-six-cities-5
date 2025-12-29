@@ -1,0 +1,16 @@
+########################################
+# ИЗБРАННЫЕ ПРЕДЛОЖЕНИЯ
+########################################
+
+### Получить избранные предложения (требуется токен)
+GET http://localhost:4000/favorites HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Добавить предложение в избранное (требуется токен)
+POST http://localhost:4000/favorites/OFFER_ID_HERE HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+
+### Удалить предложение из избранного (требуется токен)
+DELETE http://localhost:4000/favorites/OFFER_ID_HERE HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE

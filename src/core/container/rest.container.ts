@@ -23,6 +23,9 @@ import { AppExceptionFilter } from '../../libs/exception-filter/app.exception-fi
 import { UserController } from '../../libs/controller/user.controller.js';
 import { OfferController } from '../../libs/controller/offer.controller.js';
 import { CommentController } from '../../libs/controller/comment.controller.js';
+import { AuthService } from '../../lib/auth/auth-service.interface.js';
+import { DefaultAuthService } from '../../lib/auth/default-auth.service.js';
+import { AuthExceptionFilter } from '../../lib/auth/auth.exception-filter.js';
 
 export function createRestApplicationContainer() {
   const restApplicationContainer = new Container();
@@ -32,10 +35,12 @@ export function createRestApplicationContainer() {
   restApplicationContainer.bind<Config<RestSchema>>(Component.Config).to(RestConfig).inSingletonScope();
   restApplicationContainer.bind<DatabaseClient>(Component.DatabaseClient).to(MongoDatabaseClient).inSingletonScope();
   restApplicationContainer.bind<ExceptionFilter>(Component.ExceptionFilter).to(AppExceptionFilter).inSingletonScope();
+  restApplicationContainer.bind<ExceptionFilter>(Component.AuthExceptionFilter).to(AuthExceptionFilter).inSingletonScope();
 
   restApplicationContainer.bind<UserService>(Component.UserService).to(DefaultUserService);
   restApplicationContainer.bind<OfferService>(Component.OfferService).to(DefaultOfferService);
   restApplicationContainer.bind<CommentService>(Component.CommentService).to(DefaultCommentService);
+  restApplicationContainer.bind<AuthService>(Component.AuthService).to(DefaultAuthService);
 
   restApplicationContainer.bind<UserController>(Component.UserController).to(UserController);
   restApplicationContainer.bind<OfferController>(Component.OfferController).to(OfferController);

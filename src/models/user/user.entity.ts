@@ -1,5 +1,6 @@
-import typegoose, { getModelForClass, defaultClasses } from '@typegoose/typegoose';
+import typegoose, { getModelForClass, defaultClasses, Ref } from '@typegoose/typegoose';
 import { createSHA256 } from '../../shared/helpers/common.js';
+import { OfferEntity } from '../offer/offer.entity.js';
 
 const { prop, modelOptions } = typegoose;
 
@@ -36,8 +37,8 @@ export class UserEntity extends defaultClasses.TimeStamps {
   @prop({ required: true, enum: ['ordinary', 'pro'], default: ''})
   public type!: 'ordinary' | 'pro';
 
-  @prop({ required: false, default: [], ref: 'OfferEntity' })
-  public favoriteOffers!: typegoose.Ref<typegoose.DocumentType<import('../offer/offer.entity.js').OfferEntity>>[];
+  @prop({ ref: 'OfferEntity', default: [] })
+  public favoriteOffers!: Ref<OfferEntity>[];
 
   constructor(userData: { name: string; email: string; avatar?: string; type: 'ordinary' | 'pro' }) {
     super();
@@ -46,6 +47,7 @@ export class UserEntity extends defaultClasses.TimeStamps {
     this.email = userData.email;
     this.avatar = userData.avatar;
     this.type = userData.type;
+    this.favoriteOffers = [];
   }
 
   public setPassword(password: string, salt: string) {
@@ -59,6 +61,28 @@ export class UserEntity extends defaultClasses.TimeStamps {
   public verifyPassword(password: string, salt: string) {
     const hash = createSHA256(password, salt);
     return hash === this.passwordHash;
+  }
+
+  public isOfferInFavorites(offerId: string): boolean {
+    return this.favoriteOffers.some((favoriteOffer) =>
+      favoriteOffer.toString() === offerId
+    );
+  }
+
+  public addToFavorites(offerId: string): void {
+    if (!this.isOfferInFavorites(offerId)) {
+      this.favoriteOffers.push(offerId as any);
+    }
+  }
+
+  public removeFromFavorites(offerId: string): void {
+    const index = this.favoriteOffers.findIndex((favoriteOffer) =>
+      favoriteOffer.toString() === offerId
+    );
+
+    if (index !== -1) {
+      this.favoriteOffers.splice(index, 1);
+    }
   }
 }
 

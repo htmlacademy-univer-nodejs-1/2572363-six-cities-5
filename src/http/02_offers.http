@@ -1,0 +1,63 @@
+########################################
+# ПРЕДЛОЖЕНИЯ ПО АРЕНДЕ
+########################################
+
+### Получить все предложения (до 60 по умолчанию)
+GET http://localhost:4000/offers HTTP/1.1
+
+### Получить предложения с ограничением количества
+GET http://localhost:4000/offers?limit=10 HTTP/1.1
+
+
+### Получить предложения по городу
+GET http://localhost:4000/offers?city=Paris HTTP/1.1
+
+
+### Получить премиальные предложения для города
+GET http://localhost:4000/offers/premium_by_city/Amsterdam HTTP/1.1
+
+
+### Создать новое предложение (требуется токен)
+POST http://localhost:4000/offers HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Красивая и роскошная квартира в центре Амстердама",
+  "description": "Тихая, уютная и живописная квартира в сердце Амстердама. Идеально для пар и семей.",
+  "publishedDate": "2024-01-15T10:30:00.000Z",
+  "city": "Amsterdam",
+  "previewImage": "img/apartment-01.jpg",
+  "images": ["img/apartment-01.jpg", "img/apartment-02.jpg", "img/apartment-03.jpg", "img/room.jpg", "img/studio-01.jpg", "img/apartment-01.jpg"],
+  "isPremium": true,
+  "rating": 4.8,
+  "type": "apartment",
+  "bedrooms": 3,
+  "maxAdults": 4,
+  "price": 120,
+  "goods": ["Breakfast", "Air conditioning", "Laptop friendly workspace", "Baby seat", "Washer", "Towels", "Fridge"],
+  "commentsCount": 0,
+  "latitude": 52.370216,
+  "longitude": 4.895168
+}
+
+
+### Получить предложение по ID
+GET http://localhost:4000/offers/OFFER_ID_HERE HTTP/1.1
+
+
+### Обновить предложение (требуется токен, только свои предложения)
+PUT http://localhost:4000/offers/OFFER_ID_HERE HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Обновленное название квартиры",
+  "description": "Обновленное описание квартиры со всеми современными удобствами.",
+  "price": 150
+}
+
+
+### Удалить предложение (требуется токен, только свои предложения)
+DELETE http://localhost:4000/offers/OFFER_ID_HERE HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE

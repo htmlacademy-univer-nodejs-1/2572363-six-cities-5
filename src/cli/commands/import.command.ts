@@ -10,6 +10,7 @@ import { DefaultOfferService } from '../../models/offer/default-offer.service.js
 import { Command } from '../command.interface.js';
 import { Component } from '../../types/component.enum.js';
 import { createRestApplicationContainer } from '../../core/container/rest.container.js';
+import {CreateOfferDto} from '../../models/offer';
 
 export class ImportCommand implements Command {
   private processedCount = 0;
@@ -66,8 +67,13 @@ export class ImportCommand implements Command {
     try {
       const { userDto, offerDto } = parseTSVLine(line);
       const userRecord = await this.userService!.findOrCreate(userDto, this.salt);
-      offerDto.author = userRecord.id.toString();
-      await this.offerService!.create(offerDto);
+
+      const completeOfferDto: CreateOfferDto = {
+        ...offerDto,
+        author: userRecord.id.toString()
+      };
+
+      await this.offerService!.create(completeOfferDto);
       this.processedCount++;
 
       if (this.processedCount % 100 === 0) {

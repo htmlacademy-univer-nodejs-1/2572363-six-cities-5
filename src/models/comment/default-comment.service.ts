@@ -8,13 +8,17 @@ import { Component } from '../../types/component.enum.js';
 import { CommentModel } from './comment.entity.js';
 import { Types } from 'mongoose';
 
+interface CreateCommentData extends Omit<CreateCommentDto, 'userId'> {
+  userId: string;
+}
+
 @injectable()
 export class DefaultCommentService implements CommentService {
   constructor(
     @inject(Component.Logger) private readonly logger: Logger
   ) {}
 
-  public async create(dto: CreateCommentDto, offerId: string): Promise<DocumentType<CommentEntity>> {
+  public async create(dto: CreateCommentData, offerId: string): Promise<DocumentType<CommentEntity>> {
     try {
       const result = await CommentModel.create({
         text: dto.text,

@@ -8,16 +8,22 @@ import { Component } from '../../types/component.enum.js';
 import { OfferModel } from './offer.entity.js';
 import { City } from '../../types/city.enum.js';
 import { CommentService } from '../comment/comment-service.interface.js';
+import { UserService } from '../user/user-service.interface.js';
 
 @injectable()
 export class DefaultOfferService implements OfferService {
   constructor(
     @inject(Component.Logger) private readonly logger: Logger,
-    @inject(Component.CommentService) private readonly commentService: CommentService
+    @inject(Component.CommentService) private readonly commentService: CommentService,
+    @inject(Component.UserService) private readonly userService: UserService
   ) {}
 
   public async create(dto: CreateOfferDto): Promise<DocumentType<OfferEntity>> {
     try {
+      if (!dto.author) {
+        throw new Error('Author is required to create an offer');
+      }
+
       const result = await OfferModel.create(dto);
       this.logger.info(`Created offer: ${dto.title}`);
       return result;
@@ -39,14 +45,27 @@ export class DefaultOfferService implements OfferService {
     }
   }
 
-  public async find(limit: number, city?: string): Promise<DocumentType<OfferEntity>[]> {
+  public async find(limit: number, city?: string, userId?: string): Promise<DocumentType<OfferEntity>[]> {
     try {
       const query = city ? { city: city as City } : {};
-      return await OfferModel
+      const offers = await OfferModel
         .find(query)
         .limit(limit)
         .populate('author')
         .exec();
+
+      if (userId) {
+        for (const offer of offers) {
+          const isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          (offer as any).isFavorite = isFavorite;
+        }
+      } else {
+        for (const offer of offers) {
+          (offer as any).isFavorite = false;
+        }
+      }
+
+      return offers;
     } catch (error) {
       this.logger.error(`Failed to find offers with limit: ${limit}`, error as Error);
       return [];
@@ -78,9 +97,9 @@ export class DefaultOfferService implements OfferService {
     }
   }
 
-  public async findPremiumByCity(city: string, limit = 3): Promise<DocumentType<OfferEntity>[]> {
+  public async findPremiumByCity(city: string, limit = 3, userId?: string): Promise<DocumentType<OfferEntity>[]> {
     try {
-      return await OfferModel
+      const offers = await OfferModel
         .find({
           city: city as City,
           isPremium: true
@@ -88,6 +107,19 @@ export class DefaultOfferService implements OfferService {
         .limit(limit)
         .populate('author')
         .exec();
+
+      if (userId) {
+        for (const offer of offers) {
+          const isFavorite = await this.userService.isOfferInFavorites(userId, offer.id);
+          (offer as any).isFavorite = isFavorite;
+        }
+      } else {
+        for (const offer of offers) {
+          (offer as any).isFavorite = false;
+        }
+      }
+
+      return offers;
     } catch (error) {
       this.logger.error(`Failed to find premium offers for city: ${city}`, error as Error);
       return [];
@@ -139,6 +171,30 @@ export class DefaultOfferService implements OfferService {
     } catch (error) {
       this.logger.error(`Failed to check if offer exists: ${offerId}`, error as Error);
       return false;
+    }
+  }
+
+  public async findFavorites(userId: string): Promise<DocumentType<OfferEntity>[]> {
+    try {
+      const favoriteOfferIds = await this.userService.getFavorites(userId);
+
+      if (favoriteOfferIds.length === 0) {
+        return [];
+      }
+
+      const offers = await OfferModel
+        .find({ _id: { $in: favoriteOfferIds } })
+        .populate('author')
+        .exec();
+
+      for (const offer of offers) {
+        (offer as any).isFavorite = true;
+      }
+
+      return offers;
+    } catch (error) {
+      this.logger.error(`Failed to find favorite offers for user: ${userId}`, error as Error);
+      return [];
     }
   }
 }

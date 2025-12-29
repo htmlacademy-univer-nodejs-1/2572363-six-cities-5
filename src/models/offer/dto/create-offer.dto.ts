@@ -1,7 +1,7 @@
 import { City } from '../../../types/city.enum.js';
 import { OfferType } from '../../../types/offer-type.enum.js';
 import { Goods } from '../../../types/goods.enum.js';
-import { IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsMongoId, IsNumber, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsMongoId, IsNumber, IsString, Max, MaxLength, Min, MinLength, IsOptional } from 'class-validator';
 
 
 export class CreateOfferDto {
@@ -58,8 +58,9 @@ export class CreateOfferDto {
   @IsEnum(Goods, { each: true })
   public goods!: Goods[];
 
+  @IsOptional()
   @IsMongoId()
-  public author!: string;
+  public author?: string;
 
   @IsInt()
   @Min(0, { message: 'Comments count cannot be negative' })
