@@ -1,0 +1,86 @@
+########################################
+# ТЕСТИРОВАНИЕ ОШИБОК И ВАЛИДАЦИИ
+########################################
+
+### Тест: Неверный ObjectID (должен вернуть 400)
+GET http://localhost:4000/offers/invalid-object-id HTTP/1.1
+
+
+### Тест: Несуществующее предложение (должен вернуть 404)
+GET http://localhost:4000/offers/507f1f77bcf86cd799439999 HTTP/1.1
+
+
+### Тест: Некорректное создание предложения (ошибки валидации)
+POST http://localhost:4000/offers HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Коротко",
+  "description": "Слишком коротко",
+  "publishedDate": "неправильная-дата",
+  "city": "InvalidCity",
+  "previewImage": "img.jpg",
+  "images": ["img1.jpg", "img2.jpg"],
+  "isPremium": "не-булево",
+  "rating": 10,
+  "type": "invalid-type",
+  "bedrooms": 0,
+  "maxAdults": 0,
+  "price": 50,
+  "goods": ["InvalidGood"],
+  "commentsCount": -1,
+  "latitude": "не-число",
+  "longitude": "не-число"
+}
+
+
+### Тест: Некорректная регистрация пользователя (ошибки валидации)
+POST http://localhost:4000/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "неправильный-email",
+  "password": "короткий",
+  "type": "invalid-type"
+}
+
+
+### Тест: Регистрация дубликата пользователя (должен вернуть 409)
+POST http://localhost:4000/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Существующий пользователь",
+  "email": "ivan@example.com",
+  "password": "password123",
+  "type": "ordinary"
+}
+
+
+### Тест: Неправильный логин или пароль (должен вернуть 401)
+POST http://localhost:4000/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "wrongpassword"
+}
+
+
+### Тест: Некорректное создание комментария (ошибки валидации)
+POST http://localhost:4000/offers/507f1f77bcf86cd799439012/comments HTTP/1.1
+Content-Type: application/json
+
+{
+  "text": "При",
+  "rating": 10
+}
+
+
+### Тест: Загрузка аватара без файла (должен вернуть 400)
+POST http://localhost:4000/users/507f1f77bcf86cd799439011/avatar HTTP/1.1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary--

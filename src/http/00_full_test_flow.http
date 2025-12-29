@@ -1,0 +1,119 @@
+########################################
+# ПОЛНЫЙ ТЕСТОВЫЙ СЦЕНАРИЙ (по порядку)
+########################################
+
+### 1. Регистрация нового пользователя
+POST http://localhost:4000/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Анна Петрова",
+  "email": "anna@example.com",
+  "password": "anna123",
+  "type": "ordinary"
+}
+
+
+### 2. Вход в систему (получаем токен)
+POST http://localhost:4000/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "anna@example.com",
+  "password": "anna123"
+}
+
+
+### 3. Проверка статуса (используем токен из шага 2)
+# Сохраните токен из ответа предыдущего запроса и используйте здесь
+GET http://localhost:4000/users/login HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTEzMiwiZXhwIjoxNzY3MjExOTMyfQ.uuaoLY0nYneqRYgZFd3EoTXYBQ1FJ9gVxMp80y2PpZg
+
+
+### 4. Получить все предложения
+GET http://localhost:4000/offers HTTP/1.1
+
+
+### 5. Создать новое предложение
+POST http://localhost:4000/offers HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+
+### Создать новое предложение (требуется токен)
+POST http://localhost:4000/offers HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTEzMiwiZXhwIjoxNzY3MjExOTMyfQ.uuaoLY0nYneqRYgZFd3EoTXYBQ1FJ9gVxMp80y2PpZg
+Content-Type: application/json
+
+{
+  "title": "Красивая и роскошная квартира в центре Амстердама",
+  "description": "Тихая, уютная и живописная квартира в сердце Амстердама. Идеально для пар и семей.",
+  "publishedDate": "2024-01-15T10:30:00.000Z",
+  "city": "Amsterdam",
+  "previewImage": "img/apartment-01.jpg",
+  "images": ["img/apartment-01.jpg", "img/apartment-02.jpg", "img/apartment-03.jpg", "img/room.jpg", "img/studio-01.jpg", "img/apartment-01.jpg"],
+  "isPremium": true,
+  "rating": 4.8,
+  "type": "apartment",
+  "bedrooms": 3,
+  "maxAdults": 4,
+  "price": 120,
+  "goods": ["Breakfast", "Air conditioning", "Laptop friendly workspace", "Baby seat", "Washer", "Towels", "Fridge"],
+  "commentsCount": 0,
+  "latitude": 52.370216,
+  "longitude": 4.895168
+}
+
+
+### 6. Получить созданное предложение (используйте ID из шага 5)
+GET http://localhost:4000/offers/69515473573bec15574023df HTTP/1.1
+
+
+### 7. Добавить предложение в избранное
+POST http://localhost:4000/favorites/69515473573bec15574023df HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+
+
+### 8. Получить список избранных
+GET http://localhost:4000/favorites HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+
+
+### 9. Создать комментарий к предложению
+POST http://localhost:4000/offers/69515473573bec15574023df/comments HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+Content-Type: application/json
+
+{
+  "text": "Очень понравилась квартира, все чисто и аккуратно. Отличное расположение!",
+  "rating": 5
+}
+
+
+### 10. Получить комментарии к предложению
+GET http://localhost:4000/offers/69515473573bec15574023df/comments HTTP/1.1
+
+
+### 11. Обновить предложение
+PUT http://localhost:4000/offers/6952e53ecd4b8f49f7cc27e1 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTEzMiwiZXhwIjoxNzY3MjExOTMyfQ.uuaoLY0nYneqRYgZFd3EoTXYBQ1FJ9gVxMp80y2PpZg
+Content-Type: application/json
+
+{
+  "title": "Обновленная уютная студия в Париже",
+  "price": 1010,
+  "isPremium": true
+}
+
+
+### 12. Удалить предложение из избранного
+DELETE http://localhost:4000/favorites/69515473573bec15574023df HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+
+
+### 13. Проверить, что избранное пустое
+GET http://localhost:4000/favorites HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTM1MywiZXhwIjoxNzY3MjEyMTUzfQ.0nd-zu5xmTUY4sKZk-qkviufdmXZSdjMDsAYkLPWRiA
+
+
+### 14. Удалить предложение
+DELETE http://localhost:4000/offers/6952e46ccd4b8f49f7cc27d3 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFubmFAZXhhbXBsZS5jb20iLCJuYW1lIjoi0JDQvdC90LAg0J_QtdGC0YDQvtCy0LAiLCJpZCI6IjY5NTJlMDkzN2Q1OWU3ZmY1YWJjYzBiOSIsInR5cGUiOiJvcmRpbmFyeSIsImlhdCI6MTc2NzAzOTEzMiwiZXhwIjoxNzY3MjExOTMyfQ.uuaoLY0nYneqRYgZFd3EoTXYBQ1FJ9gVxMp80y2PpZg
