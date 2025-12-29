@@ -10,7 +10,4 @@ export interface UserService {
   updateById(userId: string, dto: UpdateUserDto): Promise<DocumentType<UserEntity> | null>;
   verifyUser(email: string, password: string, salt: string): Promise<DocumentType<UserEntity> | null>;
   findById(userId: string): Promise<DocumentType<UserEntity> | null>;
-  addFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null>;
-  removeFavorite(userId: string, offerId: string): Promise<DocumentType<UserEntity> | null>;
-  getFavorites(userId: string): Promise<DocumentType<import('../offer/offer.entity.js').OfferEntity>[]>;
 }

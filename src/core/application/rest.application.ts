@@ -42,6 +42,8 @@ export class RestApplication {
 
   private _initMiddleware() {
     this.expressApplication.use(express.json());
+    const uploadDirectory = this.config.get('UPLOAD_DIRECTORY');
+    this.expressApplication.use('/upload', express.static(uploadDirectory));
   }
 
   private _initRoutes(controllers: Controller[]) {

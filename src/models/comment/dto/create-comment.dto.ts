@@ -12,8 +12,5 @@ export class CreateCommentDto {
   public rating!: number;
 
   @IsMongoId()
-  public offerId!: string;
-
-  @IsMongoId()
   public userId!: string;
 }
