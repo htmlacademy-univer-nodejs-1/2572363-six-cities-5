@@ -9,6 +9,15 @@ export interface UserEntity extends defaultClasses.Base {}
   schemaOptions: {
     collection: 'users',
     timestamps: true,
+    id: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false
+    },
+    toObject: {
+      virtuals: true,
+      versionKey: false
+    }
   }
 })
 export class UserEntity extends defaultClasses.TimeStamps {
