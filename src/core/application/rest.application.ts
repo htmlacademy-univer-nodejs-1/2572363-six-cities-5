@@ -1,5 +1,6 @@
 import { inject, injectable } from 'inversify';
 import express, { Express } from 'express';
+import cors from 'cors';
 import { Logger } from '../logger/logger.interface.js';
 import { Config } from '../config/config.interface.js';
 import { RestSchema } from '../config/rest.schema.js';
@@ -43,6 +44,8 @@ export class RestApplication {
   }
 
   private _initMiddleware() {
+    this.expressApplication.use(cors());
+
     const parseTokenMiddleware = new ParseTokenMiddleware(this.config);
     this.expressApplication.use(parseTokenMiddleware.execute.bind(parseTokenMiddleware));
 
